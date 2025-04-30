@@ -1,0 +1,154 @@
+body {
+  background-color: #f3f4f6;
+}
+
+header {
+  background: linear-gradient(to right, #405f43, #42612a);
+}
+
+.nav-bar {
+  z-index: 1000;
+}
+
+.task-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.task-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.task-card.expanded {
+  max-height: 1000px;
+}
+
+.task-card .task-details {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.task-card.expanded .task-details {
+  max-height: 500px;
+  padding: 1rem;
+}
+
+.task-card.overdue {
+  background-color: #e48a8a !important;
+}
+
+.task-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
+
+.season-spring {
+  background-color: #ecfbe8;
+}
+
+.season-summer {
+  background-color: #f7efc0;
+}
+
+.season-autumn {
+  background-color: #fee2c9;
+}
+
+.season-winter {
+  background-color: #d1eafa;
+}
+
+.category-button {
+  background-color: #e5e7eb;
+  color: #374151;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.category-button:hover {
+  background-color: #d1d5db;
+}
+
+.category-button.active {
+  background-color: #16a34a;
+  color: white;
+}
+
+.completed-button {
+  background-color: #f97316;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.completed-button:hover {
+  background-color: #ea580c;
+}
+
+.archive-button {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.archive-button:hover {
+  background-color: #2563eb;
+}
+
+.edit-button {
+  background-color: #eab308;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.edit-button:hover {
+  background-color: #ca8a04;
+}
+
+.completed-flag {
+  color: #16a34a;
+  font-weight: bold;
+}
+
+.user-edit-form {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.user-edit-form.expanded {
+  max-height: 500px;
+  padding: 1rem;
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .task-card {
+    padding: 0.75rem;
+  }
+
+  .category-button, .completed-button, .archive-button, .edit-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+  }
+
+  #staff-filter {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
