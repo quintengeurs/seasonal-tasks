@@ -3,76 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Seasonal Tasks</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>Task Manager - Admin</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="bg-gray-100 font-sans">
-  <nav class="nav-bar hidden md:block bg-gradient-to-r from-green-600 to-green-500 text-white py-4">
-    <div class="container mx-auto flex justify-center gap-8" id="nav-links">
-      <a href="/" class="font-semibold hover:underline">Home</a>
-      <!-- Additional links populated dynamically based on role -->
-      <a href="/login" class="font-semibold hover:underline" id="auth-link">Login</a>
-    </div>
+<body>
+  <nav class="navbar">
+    <ul>
+      <li><a href="/index">Tasks</a></li>
+      <li><a href="/admin">Task Manager</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
   </nav>
+  <div class="container">
+    <h1>Task Manager</h1>
 
-  <header class="bg-green-600 text-white py-6 text-center">
-    <h1 class="text-3xl font-bold">Admin - Manage Tasks</h1>
-  </header>
-
-  <main class="container mx-auto p-4">
-    <h2 class="text-2xl font-semibold mb-4">Add New Task</h2>
-    <form id="task-form" class="bg-white p-6 rounded shadow-md" enctype="multipart/form-data">
-      <div class="mb-4">
-        <label class="block text-gray-700">Task Title</label>
-        <input type="text" id="task-title" name="title" class="w-full p-2 border rounded" required>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-700">Category</label>
-        <select id="task-category" name="category" class="w-full p-2 border rounded" required>
-          <option value="Tree Work">Tree Work</option>
-          <option value="Shrub Work">Shrub Work</option>
-          <option value="Lawn Care">Lawn Care</option>
-          <option value="Pond Maintenance">Pond Maintenance</option>
-          <option value="Wildflower Meadow Work">Wildflower Meadow Work</option>
-        </select>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-700">Description</label>
-        <textarea id="task-description" name="description" class="w-full p-2 border rounded" required></textarea>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-700">Due Date</label>
-        <input type="date" id="task-due-date" name="dueDate" class="w-full p-2 border rounded" required>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-700">Quick-Fill Season</label>
-        <div class="flex gap-2">
-          <button type="button" class="season-fill bg-green-600 text-white py-1 px-3 rounded" data-season="Spring">Spring</button>
-          <button type="button" class="season-fill bg-yellow-600 text-white py-1 px-3 rounded" data-season="Summer">Summer</button>
-          <button type="button" class="season-fill bg-orange-600 text-white py-1 px-3 rounded" data-season="Autumn">Autumn</button>
-          <button type="button" class="season-fill bg-blue-600 text-white py-1 px-3 rounded" data-season="Winter">Winter</button>
+    <!-- Task Creation Form -->
+    <section class="task-form">
+      <h2>Add New Task</h2>
+      <form action="/tasks" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="title">Title:</label>
+          <input type="text" id="title" name="title" required>
         </div>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-700">Assigned Staff/Team</label>
-        <select id="task-staff" name="staff" class="w-full p-2 border rounded" required>
-          <!-- Staff and teams populated dynamically -->
-        </select>
-      </div>
-      <div class="mb-4">
-        <label class="block text-gray-700">Task Image (Optional)</label>
-        <input type="file" id="task-image" name="image" class="w-full p-2 border rounded" accept="image/*">
-      </div>
-      <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Add Task</button>
-    </form>
+        <div class="form-group">
+          <label for="dueDate">Due Date:</label>
+          <input type="date" id="dueDate" name="dueDate">
+        </div>
+        <div class="form-group">
+          <label for="season">Season:</label>
+          <select id="season" name="season">
+            <option value="">None</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="fall">Fall</option>
+            <option value="winter">Winter</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="status">Status:</label>
+          <select id="status" name="status">
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="type">Type:</label>
+          <select id="type" name="type">
+            <option value="seasonal">Seasonal</option>
+            <option value="urgent">Urgent</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="assignedTo">Assigned To:</label>
+          <select id="assignedTo" name="assignedTo">
+            <option value="">None</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="image">Image (jpeg, jpg, png, gif, max 5MB):</label>
+          <input type="file" id="image" name="image" accept="image/*">
+        </div>
+        <button type="submit">Add Task</button>
+      </form>
+    </section>
 
-    <h2 class="text-2xl font-semibold mt-8 mb-4">Existing Tasks</h2>
-    <div id="task-list" class="bg-white p-6 rounded shadow-md">
-      <!-- Tasks will be dynamically inserted here -->
-    </div>
-  </main>
-
+    <!-- Task List -->
+    <section class="task-section">
+      <h2>All Tasks</h2>
+      <div id="task-list" class="task-grid"></div>
+    </section>
+  </div>
   <script src="/scripts.js"></script>
 </body>
 </html>

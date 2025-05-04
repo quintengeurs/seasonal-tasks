@@ -1,20 +1,23 @@
 [
   {
-    "id": "1",
+    "id": 1,
     "username": "admin",
-    "password": "adminpass",
-    "accountType": "admin"
+    "password": "admin123",
+    "role": "admin",
+    "name": "Admin User"
   },
   {
-    "id": "1745853109045",
-    "username": "quinten.geurs@gmhackney.gov.uk",
-    "password": "QGeurs",
-    "accountType": "admin"
+    "id": 2,
+    "username": "manager",
+    "password": "manager123",
+    "role": "manager",
+    "name": "Manager User"
   },
   {
-    "id": "2",
-    "username": "robert.hughes@hackney.gov.uk",
-    "password": "RHughes",
-    "accountType": "generic"
+    "id": 3,
+    "username": "staff",
+    "password": "staff123",
+    "role": "staff",
+    "name": "Staff User"
   }
 ]
