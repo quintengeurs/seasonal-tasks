@@ -1,4 +1,9 @@
+# Ignore everything in public/uploads/
+public/uploads/*
+# Except .gitkeep
+!public/uploads/.gitkeep
+# Other ignores
 node_modules/
-.DS_Store
-public/Uploads/
-public/uploads/
+.env
+*.log
+package-lock2.json
