@@ -30,6 +30,9 @@ h1, h2, h3 {
   padding: 10px;
   margin-bottom: 20px;
   display: none;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .navbar ul {
@@ -48,7 +51,7 @@ h1, h2, h3 {
   color: #333;
 }
 
-.task-form, .task-section, .filters {
+.task-form, .task-section, .filters, .staff-form, .staff-list {
   margin-bottom: 30px;
 }
 
@@ -107,7 +110,7 @@ button:hover, .filter-btn:hover, .complete-btn:hover, .delete-btn:hover, .archiv
   gap: 20px;
 }
 
-.task-card {
+.task-card, .staff-card {
   background: #fff;
   border: 1px solid #ddd;
   padding: 15px;

@@ -4,12 +4,25 @@
     "title": "Plant flowers",
     "dueDate": "2025-05-10",
     "season": "spring",
-    "status": "pending",
+    "status": "completed",
     "type": "seasonal",
     "assignedTo": 3,
     "archived": false,
     "imagePath": null,
     "createdAt": "2025-05-04T12:00:00Z",
+    "updatedAt": "2025-05-04T12:58:37.929Z"
+  },
+  {
+    "id": 2,
+    "title": "Clean tools",
+    "dueDate": "2025-04-01",
+    "season": "winter",
+    "status": "completed",
+    "type": "urgent",
+    "assignedTo": 3,
+    "archived": true,
+    "imagePath": null,
+    "createdAt": "2025-04-01T12:00:00Z",
     "updatedAt": "2025-05-04T12:00:00Z"
   }
 ]
