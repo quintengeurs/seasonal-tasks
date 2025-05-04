@@ -2,24 +2,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const taskList = document.getElementById('task-list');
   const assignedToFilter = document.getElementById('assignedTo');
   const filterButtons = document.querySelectorAll('.filter-btn');
+  const navbar = document.querySelector('.navbar');
   let tasks = [];
   let users = [];
 
-  // Fetch users (admin/manager only)
-  if (assignedToFilter) {
-    fetch('/users.json')
-      .then(response => response.json())
-      .then(data => {
-        users = data;
+  // Hide navbar for non-admin/manager users
+  fetch('/users.json')
+    .then(response => response.json())
+    .then(data => {
+      users = data;
+      const user = users.find(u => u.username === document.cookie.split('; ').find(row => row.startsWith('username='))?.split('=')[1]);
+      if (!user || !['admin', 'manager'].includes(user.role)) {
+        navbar.style.display = 'none';
+      }
+      // Populate assignedTo dropdown
+      if (assignedToFilter) {
         users.forEach(user => {
           const option = document.createElement('option');
           option.value = user.id;
           option.textContent = user.name;
           assignedToFilter.appendChild(option);
         });
-      })
-      .catch(error => console.error('Error fetching users:', error));
-  }
+      }
+    })
+    .catch(error => console.error('Error fetching users:', error));
 
   // Fetch and display tasks
   const renderTasks = () => {
@@ -78,10 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   };
 
-  // Initialize task display
   renderTasks();
-
-  // Filter button handling
   filterButtons.forEach(button => {
     button.addEventListener('click', () => {
       filterButtons.forEach(btn => btn.classList.remove('active'));
@@ -89,8 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTasks();
     });
   });
-
-  // Assigned to filter handling
   if (assignedToFilter) {
     assignedToFilter.addEventListener('change', renderTasks);
   }

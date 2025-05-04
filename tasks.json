@@ -6,9 +6,9 @@
     "season": "spring",
     "status": "pending",
     "type": "seasonal",
-    "assignedTo": 1,
+    "assignedTo": 3,
     "archived": false,
-    "imagePath": "/uploads/123456789-flower.jpg",
+    "imagePath": null,
     "createdAt": "2025-05-04T12:00:00Z",
     "updatedAt": "2025-05-04T12:00:00Z"
   }

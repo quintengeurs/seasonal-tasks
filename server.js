@@ -41,7 +41,7 @@ const requireAdminOrManager = (req, res, next) => {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'public', 'Uploads'));
+    cb(null, path.join(__dirname, 'public', 'uploads'));
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}-${file.originalname}`;
@@ -101,7 +101,6 @@ app.get('/admin', requireLogin, requireAdminOrManager, (req, res) => {
 app.get('/tasks.json', requireLogin, (req, res) => {
   if (fs.existsSync('tasks.json')) {
     const tasks = JSON.parse(fs.readFileSync('tasks.json'));
-    // Filter tasks for non-admin/manager users to show only their assigned tasks
     if (!['admin', 'manager'].includes(req.session.user.role)) {
       res.json(tasks.filter(task => task.assignedTo === req.session.user.id));
     } else {
@@ -112,7 +111,7 @@ app.get('/tasks.json', requireLogin, (req, res) => {
   }
 });
 
-// Serve users.json for dropdown (admin/manager only)
+// Serve users.json for dropdown
 app.get('/users.json', requireLogin, requireAdminOrManager, (req, res) => {
   if (fs.existsSync('users.json')) {
     res.json(JSON.parse(fs.readFileSync('users.json')));
@@ -121,11 +120,11 @@ app.get('/users.json', requireLogin, requireAdminOrManager, (req, res) => {
   }
 });
 
-// Task creation (admin/manager only)
+// Task creation
 app.post('/tasks', requireLogin, requireAdminOrManager, upload.single('image'), (req, res) => {
   try {
     const { title, dueDate, season, status, type, assignedTo } = req.body;
-    const imagePath = req.file ? `/Uploads/${req.file.filename}` : null;
+    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (!title) {
       throw new Error('Title is required');
@@ -150,7 +149,7 @@ app.post('/tasks', requireLogin, requireAdminOrManager, upload.single('image'), 
     res.redirect('/admin');
   } catch (err) {
     console.error('Error creating task:', err);
-    res.status(400).send(`Error: ${err.message || 'Failed to create task. Ensure the image is a valid jpeg, jpg, png, or gif under 5MB.'}`);
+    res.status(400).send(`Error: ${err.message || 'Failed to create task.'}`);
   }
 });
 
@@ -166,7 +165,7 @@ app.post('/tasks/:id/complete', requireLogin, (req, res) => {
   res.redirect('/index');
 });
 
-// Delete task (admin/manager only)
+// Delete task
 app.post('/tasks/:id/delete', requireLogin, requireAdminOrManager, (req, res) => {
   let tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
   tasks = tasks.filter(t => t.id !== parseInt(req.params.id));
@@ -174,7 +173,7 @@ app.post('/tasks/:id/delete', requireLogin, requireAdminOrManager, (req, res) =>
   res.redirect('/admin');
 });
 
-// Archive task (admin/manager only)
+// Archive task
 app.post('/tasks/:id/archive', requireLogin, requireAdminOrManager, (req, res) => {
   const tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
   const task = tasks.find(t => t.id === parseInt(req.params.id));
