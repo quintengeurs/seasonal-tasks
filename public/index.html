@@ -3,45 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seasonal Garden Tasks</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>Task Manager</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="bg-gray-100 font-sans">
-  <nav class="nav-bar hidden md:block bg-gradient-to-r from-green-600 to-green-500 text-white py-4">
-    <div class="container mx-auto flex justify-center gap-8" id="nav-links">
-      <a href="/" class="font-semibold hover:underline">Home</a>
-      <!-- Additional links populated dynamically based on role -->
-      <a href="/login" class="font-semibold hover:underline" id="auth-link">Login</a>
-    </div>
-  </nav>
+<body>
+  <div class="container">
+    <h1>Task Manager</h1>
 
-  <header class="bg-green-600 text-white py-6 text-center">
-    <h1 class="text-3xl font-bold">Seasonal Garden Tasks</h1>
-    <p id="current-season" class="mt-2 text-lg"></p>
-  </header>
+    <!-- Task Creation Form -->
+    <section class="task-form">
+      <h2>Add New Task</h2>
+      <form action="/tasks" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="title">Title:</label>
+          <input type="text" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+          <label for="dueDate">Due Date:</label>
+          <input type="date" id="dueDate" name="dueDate">
+        </div>
+        <div class="form-group">
+          <label for="season">Season:</label>
+          <select id="season" name="season">
+            <option value="">None</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="fall">Fall</option>
+            <option value="winter">Winter</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="status">Status:</label>
+          <select id="status" name="status">
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="image">Image (jpeg, jpg, png, gif, max 5MB):</label>
+          <input type="file" id="image" name="image" accept="image/*">
+        </div>
+        <button type="submit">Add Task</button>
+      </form>
+    </section>
 
-  <main class="container mx-auto p-4">
-    <div class="flex flex-wrap justify-center gap-4 mb-6">
-      <div id="category-filters" class="flex flex-wrap gap-2">
-        <!-- Category buttons will be inserted here -->
-      </div>
-      <div class="ml-4">
-        <select id="staff-filter" class="p-2 border rounded bg-gray-200 text-gray-700">
-          <option value="All">All Staff</option>
-          <!-- Staff options populated dynamically -->
-        </select>
-      </div>
-    </div>
-    <div id="task-categories" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Tasks will be dynamically inserted here -->
-    </div>
-  </main>
-
-  <footer class="bg-green-600 text-white text-center py-4 mt-8">
-    <p>© 2025 Quinten's super duper web thingy</p>
-  </footer>
-
+    <!-- Task Display -->
+    <section class="task-section">
+      <h2>Tasks</h2>
+      <div id="task-list"></div>
+    </section>
+  </div>
   <script src="/scripts.js"></script>
 </body>
 </html>
