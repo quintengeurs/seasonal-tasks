@@ -1,175 +1,164 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 body {
   font-family: Arial, sans-serif;
-  line-height: 1.6;
-  padding: 20px;
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
-  background: #fff;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-h1, h2, h3 {
-  color: #444;
+  margin: 0;
+  background-color: #f4f4f4;
 }
 
 .navbar {
-  background: #e0e0e0;
+  background-color: #e0e0e0;
   padding: 10px;
-  margin-bottom: 20px;
-  display: none;
   position: sticky;
   top: 0;
-  z-index: 100;
-}
-
-.navbar ul {
-  list-style: none;
   display: flex;
   gap: 20px;
 }
 
 .navbar a {
-  color: #555;
+  color: #333;
   text-decoration: none;
-  font-weight: bold;
+  padding: 5px 10px;
 }
 
 .navbar a:hover {
-  color: #333;
+  background-color: #d0d0d0;
 }
 
-.task-form, .task-section, .filters, .staff-form, .staff-list {
-  margin-bottom: 30px;
+.container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 20px;
 }
 
-.form-group {
-  margin-bottom: 15px;
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  color: #555;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #fafafa;
-}
-
-button, .filter-btn, .complete-btn, .delete-btn, .archive-btn {
+.filter-btn {
   padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  background-color: #e0e0e0;
   cursor: pointer;
-  background: #d0d0d0;
-  color: #333;
-}
-
-button:hover, .filter-btn:hover, .complete-btn:hover, .delete-btn:hover, .archive-btn:hover {
-  background: #b0b0b0;
 }
 
 .filter-btn.active {
-  background: #a0a0a0;
+  background-color: #d0d0d0;
 }
 
-.complete-btn:disabled, .archive-btn:disabled {
-  background: #e0e0e0;
-  cursor: not-allowed;
-}
-
-.delete-btn {
-  background: #c0c0c0;
-}
-
-.delete-btn:hover {
-  background: #a0a0a0;
-}
-
-.task-grid {
+.tasks {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
 }
 
-.task-card, .staff-card {
-  background: #fff;
-  border: 1px solid #ddd;
+.task-card {
+  background-color: #fff;
   padding: 15px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  cursor: pointer;
 }
 
-.task-card.completed-task {
-  opacity: 0.7;
+.task-card.urgent {
+  border: 3px solid #ff0000;
+}
+
+.task-card.completed {
+  opacity: 0.6;
+}
+
+.task-details.collapsed {
+  display: none;
+}
+
+.task-title, .task-type {
+  margin: 5px 0;
 }
 
 .task-image {
   max-width: 100%;
+  height: auto;
   margin-top: 10px;
-  display: block;
 }
 
-.task-actions {
+.complete-btn {
   margin-top: 10px;
-  display: flex;
-  gap: 10px;
+  padding: 5px 10px;
+  background-color: #e0e0e0;
+  border: none;
+  cursor: pointer;
 }
 
-.filters {
-  display: flex;
+.complete-btn:hover {
+  background-color: #d0d0d0;
+}
+
+.staff-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 20px;
-  flex-wrap: wrap;
 }
 
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.staff-card {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.filter-group label {
-  color: #555;
+.staff-card button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #e0e0e0;
+  border: none;
+  cursor: pointer;
 }
 
-@media (min-width: 768px) {
-  .navbar {
-    display: block;
-  }
+.staff-card button:hover {
+  background-color: #d0d0d0;
+}
+
+form {
+  margin-bottom: 20px;
+}
+
+form input, form select, form button {
+  margin: 5px;
+  padding: 8px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 15% auto;
+  padding: 20px;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 5px;
+}
+
+.close {
+  float: right;
+  font-size: 20px;
+  cursor: pointer;
 }
 
 @media (max-width: 600px) {
-  .container {
-    padding: 15px;
+  .filter-buttons {
+      flex-direction: column;
+      align-items: stretch;
   }
-
-  h1 {
-    font-size: 1.5em;
-  }
-
-  .task-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filters {
-    flex-direction: column;
+  .filter-btn {
+      width: 100%;
   }
 }

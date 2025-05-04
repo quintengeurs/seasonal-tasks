@@ -1,54 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Staff Management - Task Manager</title>
-  <link rel="stylesheet" href="/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <nav class="navbar">
-    <ul>
-      <li><a href="/index">Tasks</a></li>
-      <li><a href="/admin">Admin</a></li>
-      <li><a href="/archive">Archive</a></li>
-      <li><a href="/staff">Staff Management</a></li>
-      <li><a href="/logout">Logout</a></li>
-    </ul>
-  </nav>
-  <div class="container">
-    <h1>Staff Management</h1>
-    <section class="staff-form">
-      <h2>Add New Staff</h2>
-      <form id="add-staff-form">
-        <div class="form-group">
-          <label for="username">Username:</label>
-          <input type="text" id="username" name="username" required>
+    <nav id="navbar" class="navbar"></nav>
+    <div class="container">
+        <h1>Staff Management</h1>
+        <form id="add-staff-form">
+            <input type="text" id="staff-username" placeholder="Username" required>
+            <input type="password" id="staff-password" placeholder="Password" required>
+            <select id="staff-role">
+                <option value="staff">Staff</option>
+                <option value="manager">Manager</option>
+            </select>
+            <button type="submit">Add Staff</button>
+        </form>
+        <div id="staff-list" class="staff-list"></div>
+    </div>
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Staff</h2>
+            <form id="edit-staff-form">
+                <input type="hidden" id="edit-staff-id">
+                <input type="text" id="edit-staff-username" placeholder="Username" required>
+                <input type="password" id="edit-staff-password" placeholder="New Password">
+                <select id="edit-staff-role">
+                    <option value="staff">Staff</option>
+                    <option value="manager">Manager</option>
+                </select>
+                <button type="submit">Save Changes</button>
+            </form>
         </div>
-        <div class="form-group">
-          <label for="password">Password:</label>
-          <input type="password" id="password" name="password" required>
-        </div>
-        <div class="form-group">
-          <label for="name">Name:</label>
-          <input type="text" id="name" name="name" required>
-        </div>
-        <div class="form-group">
-          <label for="role">Role:</label>
-          <select id="role" name="role" required>
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
-            <option value="staff">Staff</option>
-          </select>
-        </div>
-        <button type="submit">Add Staff</button>
-      </form>
-    </section>
-    <section class="staff-list">
-      <h2>All Staff</h2>
-      <div id="staff-list"></div>
-    </section>
-  </div>
-  <script src="/scripts.js"></script>
+    </div>
+    <script src="scripts.js"></script>
 </body>
 </html>

@@ -1,42 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tasks - Task Manager</title>
-  <link rel="stylesheet" href="/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Tasks</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <nav class="navbar">
-    <ul>
-      <li><a href="/index">Tasks</a></li>
-      <li><a href="/admin">Admin</a></li>
-      <li><a href="/archive">Archive</a></li>
-      <li><a href="/staff">Staff Management</a></li>
-      <li><a href="/logout">Logout</a></li>
-    </ul>
-  </nav>
-  <div class="container">
-    <h1>Your Tasks</h1>
-    <section class="filters">
-      <div class="filter-group">
-        <label>Task Type:</label>
-        <button class="filter-btn active" data-type="all">All</button>
-        <button class="filter-btn" data-type="urgent">Urgent</button>
-        <button class="filter-btn" data-type="seasonal">Seasonal</button>
-        <button class="filter-btn" data-type="completed">Completed</button>
-      </div>
-      <div class="filter-group">
-        <label for="assignedTo">Assigned To:</label>
-        <select id="assignedTo">
-          <option value="all">All</option>
-        </select>
-      </div>
-    </section>
-    <section class="task-section">
-      <div id="task-list" class="task-grid"></div>
-    </section>
-  </div>
-  <script src="/scripts.js"></script>
+    <nav id="navbar" class="navbar"></nav>
+    <div class="container">
+        <h1>Your Tasks</h1>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-type="all">All</button>
+            <button class="filter-btn" data-type="maintenance">Maintenance</button>
+            <button class="filter-btn" data-type="planting">Planting</button>
+            <button class="filter-btn" data-type="harvesting">Harvesting</button>
+        </div>
+        <div id="tasks" class="tasks"></div>
+    </div>
+    <script src="scripts.js"></script>
 </body>
 </html>

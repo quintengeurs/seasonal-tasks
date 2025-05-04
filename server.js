@@ -1,241 +1,181 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
 const session = require('express-session');
-
-// Initialize Express
+const fs = require('fs').promises;
+const path = require('path');
+const multer = require('multer');
 const app = express();
 
-// Create uploads folder
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(UploadsDir, { recursive: true });
-}
-
-// Middleware
+app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-  secret: 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false } // Set to true for HTTPS
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }
 }));
 
-// Authentication middleware
-const requireLogin = (req, res, next) => {
-  if (!req.session.user) {
-    return res.redirect('/login');
-  }
-  next();
-};
+const upload = multer({ dest: 'public/uploads/' });
 
-const requireAdminOrManager = (req, res, next) => {
-  if (!req.session.user || !['admin', 'manager'].includes(req.session.user.role)) {
-    return res.status(403).send('Access denied');
-  }
-  next();
-};
-
-// Configure multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  },
-});
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
+app.get('/', async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login');
     }
-    cb(new Error('Only images (jpeg, jpg, png, gif) are allowed'));
-  },
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
-
-// Routes
-app.get('/', (req, res) => {
-  res.redirect('/login');
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    if (req.session.user) {
+        return res.redirect('/');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const users = fs.existsSync('users.json') ? JSON.parse(fs.readFileSync('users.json')) : [];
-  const user = users.find(u => u.username === username && u.password === password);
-
-  if (user) {
-    req.session.user = user;
-    res.cookie('username', user.username);
-    res.redirect('/index');
-  } else {
-    res.status(401).send('Invalid credentials');
-  }
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    const users = JSON.parse(await fs.readFile('users.json'));
+    const user = users.find(u => u.username === username && u.password === password);
+    if (user) {
+        req.session.user = user;
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, message: 'Invalid credentials' });
+    }
 });
 
 app.get('/logout', (req, res) => {
-  req.session.destroy();
-  res.clearCookie('username');
-  res.redirect('/login');
+    req.session.destroy();
+    res.redirect('/login');
 });
 
-app.get('/index', requireLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/admin', (req, res) => {
+    if (!req.session.user || !['admin', 'manager'].includes(req.session.user.role)) {
+        return res.redirect('/login');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.get('/admin', requireLogin, requireAdminOrManager, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+app.get('/archive', (req, res) => {
+    if (!req.session.user || !['admin', 'manager'].includes(req.session.user.role)) {
+        return res.redirect('/login');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'archive.html'));
 });
 
-app.get('/archive', requireLogin, requireAdminOrManager, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'archive.html'));
+app.get('/staff', (req, res) => {
+    if (!req.session.user || !['admin', 'manager'].includes(req.session.user.role)) {
+        return res.redirect('/login');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'staff.html'));
 });
 
-app.get('/staff', requireLogin, requireAdminOrManager, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'staff.html'));
+app.get('/api/tasks', async (req, res) => {
+    const tasks = JSON.parse(await fs.readFile('tasks.json'));
+    res.json(tasks);
 });
 
-app.get('/tasks.json', requireLogin, (req, res) => {
-  if (fs.existsSync('tasks.json')) {
-    const tasks = JSON.parse(fs.readFileSync('tasks.json'));
-    if (!['admin', 'manager'].includes(req.session.user.role)) {
-      res.json(tasks.filter(task => task.assignedTo === req.session.user.id && !task.archived));
-    } else if (req.path === '/archive') {
-      res.json(tasks.filter(task => task.archived));
+app.post('/api/tasks', upload.single('image'), async (req, res) => {
+    if (!req.session.user || !['admin', 'manager'].includes(req.session.user.role)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const tasks = JSON.parse(await fs.readFile('tasks.json'));
+    const newTask = {
+        id: tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
+        title: req.body.title,
+        type: req.body.type,
+        description: req.body.description,
+        dueDate: req.body.dueDate,
+        urgency: req.body.urgency,
+        image: req.file ? `uploads/${req.file.filename}` : null,
+        completed: false,
+        archived: false
+    };
+    tasks.push(newTask);
+    await fs.writeFile('tasks.json', JSON.stringify(tasks, null, 2));
+    res.json(newTask);
+});
+
+app.post('/api/tasks/:id/complete', async (req, res) => {
+    const tasks = JSON.parse(await fs.readFile('tasks.json'));
+    const task = tasks.find(t => t.id === parseInt(req.params.id));
+    if (task) {
+        task.completed = true;
+        await fs.writeFile('tasks.json', JSON.stringify(tasks, null, 2));
+        res.json({ success: true });
     } else {
-      res.json(tasks);
+        res.status(404).json({ error: 'Task not found' });
     }
-  } else {
-    res.json([]);
-  }
 });
 
-app.get('/users.json', requireLogin, (req, res) => {
-  if (fs.existsSync('users.json')) {
-    res.json(JSON.parse(fs.readFileSync('users.json')));
-  } else {
-    res.json([]);
-  }
-});
-
-app.post('/tasks', requireLogin, requireAdminOrManager, upload.single('image'), (req, res) => {
-  try {
-    const { title, dueDate, season, status, type, assignedTo } = req.body;
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
-
-    if (!title) {
-      throw new Error('Title is required');
+app.post('/api/tasks/:id/archive', async (req, res) => {
+    const tasks = JSON.parse(await fs.readFile('tasks.json'));
+    const task = tasks.find(t => t.id === parseInt(req.params.id));
+    if (task) {
+        task.archived = true;
+        await fs.writeFile('tasks.json', JSON.stringify(tasks, null, 2));
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'Task not found' });
     }
-
-    const tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
-    tasks.push({
-      id: tasks.length + 1,
-      title,
-      dueDate: dueDate || null,
-      season: season || null,
-      status: status || 'pending',
-      type: type || 'seasonal',
-      assignedTo: parseInt(assignedTo) || null,
-      archived: false,
-      imagePath,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    fs.writeFileSync('tasks.json', JSON.stringify(tasks, null, 2));
-
-    res.redirect('/admin');
-  } catch (err) {
-    console.error('Error creating task:', err);
-    res.status(400).send(`Error: ${err.message || 'Failed to create task.'}`);
-  }
 });
 
-app.post('/tasks/:id/complete', requireLogin, (req, res) => {
-  const tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
-  const task = tasks.find(t => t.id === parseInt(req.params.id));
-  if (task && (req.session.user.role === 'admin' || req.session.user.role === 'manager' || task.assignedTo === req.session.user.id)) {
-    task.status = 'completed';
-    task.updatedAt = new Date().toISOString();
-    fs.writeFileSync('tasks.json', JSON.stringify(tasks, null, 2));
-  }
-  res.redirect('/index');
-});
-
-app.post('/tasks/:id/delete', requireLogin, requireAdminOrManager, (req, res) => {
-  let tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
-  tasks = tasks.filter(t => t.id !== parseInt(req.params.id));
-  fs.writeFileSync('tasks.json', JSON.stringify(tasks, null, 2));
-  res.redirect('/admin');
-});
-
-app.post('/tasks/:id/archive', requireLogin, requireAdminOrManager, (req, res) => {
-  const tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
-  const task = tasks.find(t => t.id === parseInt(req.params.id));
-  if (task) {
-    task.archived = true;
-    task.updatedAt = new Date().toISOString();
-    fs.writeFileSync('tasks.json', JSON.stringify(tasks, null, 2));
-  }
-  res.redirect('/admin');
-});
-
-app.post('/staff', requireLogin, requireAdminOrManager, (req, res) => {
-  try {
-    const { username, password, name, role } = req.body;
-    if (!username || !password || !name || !role) {
-      throw new Error('All fields are required');
+app.delete('/api/tasks/:id', async (req, res) => {
+    if (!req.session.user || !['admin', 'manager'].includes(req.session.user.role)) {
+        return res.status(403).json({ error: 'Unauthorized' });
     }
-
-    const users = fs.existsSync('users.json') ? JSON.parse(fs.readFileSync('users.json')) : [];
-    if (users.find(u => u.username === username)) {
-      throw new Error('Username already exists');
-    }
-
-    users.push({
-      id: users.length + 1,
-      username,
-      password, // TODO: Hash passwords in production
-      name,
-      role,
-    });
-    fs.writeFileSync('users.json', JSON.stringify(users, null, 2));
-
+    let tasks = JSON.parse(await fs.readFile('tasks.json'));
+    tasks = tasks.filter(t => t.id !== parseInt(req.params.id));
+    await fs.writeFile('tasks.json', JSON.stringify(tasks, null, 2));
     res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
 });
 
-app.delete('/staff/:id', requireLogin, requireAdminOrManager, (req, res) => {
-  try {
-    let users = fs.existsSync('users.json') ? JSON.parse(fs.readFileSync('users.json')) : [];
-    const userId = parseInt(req.params.id);
-    if (users.find(u => u.id === userId && u.username === req.session.user.username)) {
-      throw new Error('Cannot delete your own account');
+app.get('/api/staff', async (req, res) => {
+    const users = JSON.parse(await fs.readFile('users.json'));
+    res.json(users);
+});
+
+app.post('/api/staff', async (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized' });
     }
-    users = users.filter(u => u.id !== userId);
-    fs.writeFileSync('users.json', JSON.stringify(users, null, 2));
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
+    const users = JSON.parse(await fs.readFile('users.json'));
+    const newUser = {
+        id: users.length ? Math.max(...users.map(u => u.id)) + 1 : 1,
+        username: req.body.username,
+        password: req.body.password,
+        role: req.body.role
+    };
+    users.push(newUser);
+    await fs.writeFile('users.json', JSON.stringify(users, null, 2));
+    res.json(newUser);
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.post('/api/staff/:id', async (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const users = JSON.parse(await fs.readFile('users.json'));
+    const user = users.find(u => u.id === parseInt(req.params.id));
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+    user.username = req.body.username || user.username;
+    user.password = req.body.password || user.password;
+    user.role = req.body.role || user.role;
+    await fs.writeFile('users.json', JSON.stringify(users, null, 2));
+    res.json({ success: true });
+});
+
+app.delete('/api/staff/:id', async (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    let users = JSON.parse(await fs.readFile('users.json'));
+    users = users.filter(u => u.id !== parseInt(req.params.id));
+    await fs.writeFile('users.json', JSON.stringify(users, null, 2));
+    res.json({ success: true });
+});
+
+app.listen(process.env.PORT || 3000, () => {
+    console.log('Server running on port 3000');
 });
