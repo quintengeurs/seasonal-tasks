@@ -11,6 +11,7 @@ body {
   top: 0;
   display: flex;
   gap: 20px;
+  z-index: 1000;
 }
 
 .navbar a {
@@ -29,17 +30,38 @@ body {
   padding: 0 20px;
 }
 
+.admin-container form {
+  display: flex;
+  flex-direction: column;
+  max-width: 500px;
+  margin-bottom: 20px;
+}
+
+.admin-container form input,
+.admin-container form select,
+.admin-container form textarea,
+.admin-container form button {
+  margin: 5px 0;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .filter-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
 }
 
 .filter-btn {
-  padding: 10px 20px;
+  padding: 8px 12px;
   border: none;
   background-color: #e0e0e0;
   cursor: pointer;
+  width: auto;
+  white-space: nowrap;
+  border-radius: 5px;
 }
 
 .filter-btn.active {
@@ -82,7 +104,7 @@ body {
   margin-top: 10px;
 }
 
-.complete-btn {
+.complete-btn, .archive-btn, .delete-btn {
   margin-top: 10px;
   padding: 5px 10px;
   background-color: #e0e0e0;
@@ -90,7 +112,7 @@ body {
   cursor: pointer;
 }
 
-.complete-btn:hover {
+.complete-btn:hover, .archive-btn:hover, .delete-btn:hover {
   background-color: #d0d0d0;
 }
 
@@ -156,9 +178,10 @@ form input, form select, form button {
 @media (max-width: 600px) {
   .filter-buttons {
       flex-direction: column;
-      align-items: stretch;
+      align-items: flex-start;
   }
-  .filter-btn {
-      width: 100%;
+  .navbar {
+      flex-direction: column;
+      gap: 10px;
   }
 }

@@ -1,28 +1,24 @@
 [
   {
-    "id": 1,
-    "title": "Plant flowers",
-    "dueDate": "2025-05-10",
-    "season": "spring",
-    "status": "completed",
-    "type": "seasonal",
-    "assignedTo": 3,
-    "archived": false,
-    "imagePath": null,
-    "createdAt": "2025-05-04T12:00:00Z",
-    "updatedAt": "2025-05-04T12:58:37.929Z"
+      "id": 1,
+      "title": "Clean tools",
+      "type": "maintenance",
+      "description": "Clean all garden tools",
+      "dueDate": "2025-05-05",
+      "urgency": "normal",
+      "image": "uploads/tools.jpg",
+      "completed": false,
+      "archived": false
   },
   {
-    "id": 2,
-    "title": "Clean tools",
-    "dueDate": "2025-04-01",
-    "season": "winter",
-    "status": "completed",
-    "type": "urgent",
-    "assignedTo": 3,
-    "archived": true,
-    "imagePath": null,
-    "createdAt": "2025-04-01T12:00:00Z",
-    "updatedAt": "2025-05-04T12:00:00Z"
+      "id": 2,
+      "title": "Plant roses",
+      "type": "planting",
+      "description": "Plant new rose bushes",
+      "dueDate": "2025-05-04",
+      "urgency": "urgent",
+      "image": null,
+      "completed": true,
+      "archived": true
   }
 ]

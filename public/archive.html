@@ -1,27 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Archive - Task Manager</title>
-  <link rel="stylesheet" href="/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archived Tasks</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <nav class="navbar">
-    <ul>
-      <li><a href="/index">Tasks</a></li>
-      <li><a href="/admin">Admin</a></li>
-      <li><a href="/archive">Archive</a></li>
-      <li><a href="/staff">Staff Management</a></li>
-      <li><a href="/logout">Logout</a></li>
-    </ul>
-  </nav>
-  <div class="container">
-    <h1>Archived Tasks</h1>
-    <section class="task-section">
-      <div id="task-list" class="task-grid"></div>
-    </section>
-  </div>
-  <script src="/scripts.js"></script>
+    <nav id="navbar" class="navbar"></nav>
+    <div class="container">
+        <h1>Archived Tasks</h1>
+        <div id="tasks" class="tasks"></div>
+    </div>
+    <script src="scripts.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/tasks')
+                .then(res => res.json())
+                .then(tasks => {
+                    const tasksContainer = document.getElementById('tasks');
+                    tasks
+                        .filter(task => task.archived)
+                        .forEach(task => {
+                            const card = document.createElement('div');
+                            card.className = 'task-card';
+                            card.innerHTML = `
+                                <h3>${task.title}</h3>
+                                <p>Type: ${task.type}</p>
+                                <p>Description: ${task.description}</p>
+                                <p>Due: ${task.due_date}</p>
+                                <p>Urgency: ${task.urgency}</p>
+                                <p>Allocated To: ${task.allocated_to || 'None'}</p>
+                                ${task.image ? `<img src="${task.image}" alt="Task Image" class="task-image">` : ''}
+                            `;
+                            tasksContainer.appendChild(card);
+                        });
+                });
+        });
+    </script>
 </body>
 </html>

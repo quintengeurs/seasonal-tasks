@@ -1,18 +1,29 @@
 const express = require('express');
 const session = require('express-session');
-const fs = require('fs').promises;
+const pg = require('pg');
+const PGSession = require('connect-pg-simple')(session);
 const path = require('path');
 const multer = require('multer');
 const app = express();
+
+// PostgreSQL connection
+const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL || 'postgresql://seasonal_tasks_user:l4aIVK3pj5FHvOQpCap4I7hGu2FPH6Vq@dpg-d0bkieruibrs73deh2ug-a.frankfurt-postgres.render.com/seasonal_tasks',
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
+    store: new PGSession({
+        pool: pool,
+        tableName: 'sessions'
+    }),
     secret: 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }
+    cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 
 const upload = multer({ dest: 'public/uploads/' });
@@ -33,10 +44,9 @@ app.get('/login', (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    const users = JSON.parse(await fs.readFile('users.json'));
-    const user = users.find(u => u.username === username && u.password === password);
-    if (user) {
-        req.session.user = user;
+    const { rows } = await pool.query('SELECT * FROM users WHERE username = $1 AND password = $2', [username, password]);
+    if (rows.length > 0) {
+        req.session.user = rows[0];
         res.json({ success: true });
     } else {
         res.json({ success: false, message: 'Invalid credentials' });
@@ -69,38 +79,35 @@ app.get('/staff', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'staff.html'));
 });
 
+app.get('/api/current-user', (req, res) => {
+    if (req.session.user) {
+        res.json(req.session.user);
+    } else {
+        res.json(null);
+    }
+});
+
 app.get('/api/tasks', async (req, res) => {
-    const tasks = JSON.parse(await fs.readFile('tasks.json'));
-    res.json(tasks);
+    const { rows } = await pool.query('SELECT * FROM tasks');
+    res.json(rows);
 });
 
 app.post('/api/tasks', upload.single('image'), async (req, res) => {
     if (!req.session.user || !['admin', 'manager'].includes(req.session.user.role)) {
         return res.status(403).json({ error: 'Unauthorized' });
     }
-    const tasks = JSON.parse(await fs.readFile('tasks.json'));
-    const newTask = {
-        id: tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
-        title: req.body.title,
-        type: req.body.type,
-        description: req.body.description,
-        dueDate: req.body.dueDate,
-        urgency: req.body.urgency,
-        image: req.file ? `uploads/${req.file.filename}` : null,
-        completed: false,
-        archived: false
-    };
-    tasks.push(newTask);
-    await fs.writeFile('tasks.json', JSON.stringify(tasks, null, 2));
-    res.json(newTask);
+    const { title, type, description, dueDate, urgency, allocatedTo } = req.body;
+    const image = req.file ? `uploads/${req.file.filename}` : null;
+    const { rows } = await pool.query(
+        'INSERT INTO tasks (title, type, description, due_date, urgency, allocated_to, image, completed, archived) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+        [title, type, description, dueDate, urgency, allocatedTo || null, image, false, false]
+    );
+    res.json(rows[0]);
 });
 
 app.post('/api/tasks/:id/complete', async (req, res) => {
-    const tasks = JSON.parse(await fs.readFile('tasks.json'));
-    const task = tasks.find(t => t.id === parseInt(req.params.id));
-    if (task) {
-        task.completed = true;
-        await fs.writeFile('tasks.json', JSON.stringify(tasks, null, 2));
+    const { rows } = await pool.query('UPDATE tasks SET completed = TRUE WHERE id = $1 RETURNING *', [req.params.id]);
+    if (rows.length > 0) {
         res.json({ success: true });
     } else {
         res.status(404).json({ error: 'Task not found' });
@@ -108,11 +115,8 @@ app.post('/api/tasks/:id/complete', async (req, res) => {
 });
 
 app.post('/api/tasks/:id/archive', async (req, res) => {
-    const tasks = JSON.parse(await fs.readFile('tasks.json'));
-    const task = tasks.find(t => t.id === parseInt(req.params.id));
-    if (task) {
-        task.archived = true;
-        await fs.writeFile('tasks.json', JSON.stringify(tasks, null, 2));
+    const { rows } = await pool.query('UPDATE tasks SET archived = TRUE WHERE id = $1 RETURNING *', [req.params.id]);
+    if (rows.length > 0) {
         res.json({ success: true });
     } else {
         res.status(404).json({ error: 'Task not found' });
@@ -123,57 +127,66 @@ app.delete('/api/tasks/:id', async (req, res) => {
     if (!req.session.user || !['admin', 'manager'].includes(req.session.user.role)) {
         return res.status(403).json({ error: 'Unauthorized' });
     }
-    let tasks = JSON.parse(await fs.readFile('tasks.json'));
-    tasks = tasks.filter(t => t.id !== parseInt(req.params.id));
-    await fs.writeFile('tasks.json', JSON.stringify(tasks, null, 2));
-    res.json({ success: true });
+    const { rowCount } = await pool.query('DELETE FROM tasks WHERE id = $1', [req.params.id]);
+    res.json({ success: rowCount > 0 });
 });
 
 app.get('/api/staff', async (req, res) => {
-    const users = JSON.parse(await fs.readFile('users.json'));
-    res.json(users);
+    const { rows } = await pool.query('SELECT * FROM users');
+    res.json(rows);
 });
 
 app.post('/api/staff', async (req, res) => {
     if (!req.session.user || req.session.user.role !== 'admin') {
         return res.status(403).json({ error: 'Unauthorized' });
     }
-    const users = JSON.parse(await fs.readFile('users.json'));
-    const newUser = {
-        id: users.length ? Math.max(...users.map(u => u.id)) + 1 : 1,
-        username: req.body.username,
-        password: req.body.password,
-        role: req.body.role
-    };
-    users.push(newUser);
-    await fs.writeFile('users.json', JSON.stringify(users, null, 2));
-    res.json(newUser);
+    const { username, password, role } = req.body;
+    const { rows } = await pool.query(
+        'INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING *',
+        [username, password, role]
+    );
+    res.json(rows[0]);
 });
 
 app.post('/api/staff/:id', async (req, res) => {
     if (!req.session.user || req.session.user.role !== 'admin') {
         return res.status(403).json({ error: 'Unauthorized' });
     }
-    const users = JSON.parse(await fs.readFile('users.json'));
-    const user = users.find(u => u.id === parseInt(req.params.id));
-    if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+    const { username, password, role } = req.body;
+    const updates = [];
+    const values = [req.params.id];
+    if (username) {
+        updates.push(`username = $${values.length + 1}`);
+        values.push(username);
     }
-    user.username = req.body.username || user.username;
-    user.password = req.body.password || user.password;
-    user.role = req.body.role || user.role;
-    await fs.writeFile('users.json', JSON.stringify(users, null, 2));
-    res.json({ success: true });
+    if (password) {
+        updates.push(`password = $${values.length + 1}`);
+        values.push(password);
+    }
+    if (role) {
+        updates.push(`role = $${values.length + 1}`);
+        values.push(role);
+    }
+    if (updates.length === 0) {
+        return res.status(400).json({ error: 'No updates provided' });
+    }
+    const { rows } = await pool.query(
+        `UPDATE users SET ${updates.join(', ')} WHERE id = $1 RETURNING *`,
+        values
+    );
+    if (rows.length > 0) {
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'User not found' });
+    }
 });
 
 app.delete('/api/staff/:id', async (req, res) => {
     if (!req.session.user || req.session.user.role !== 'admin') {
         return res.status(403).json({ error: 'Unauthorized' });
     }
-    let users = JSON.parse(await fs.readFile('users.json'));
-    users = users.filter(u => u.id !== parseInt(req.params.id));
-    await fs.writeFile('users.json', JSON.stringify(users, null, 2));
-    res.json({ success: true });
+    const { rowCount } = await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    res.json({ success: rowCount > 0 });
 });
 
 app.listen(process.env.PORT || 3000, () => {

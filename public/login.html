@@ -28,7 +28,6 @@
             });
             const data = await res.json();
             if (data.success) {
-                sessionStorage.setItem('username', username);
                 window.location.href = '/';
             } else {
                 document.getElementById('error').style.display = 'block';
