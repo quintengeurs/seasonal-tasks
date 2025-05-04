@@ -7,10 +7,10 @@ const session = require('express-session');
 // Initialize Express
 const app = express();
 
-// Create uploads folder dynamically (lowercase)
+// Create uploads folder
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+  fs.mkdirSync(UploadsDir, { recursive: true });
 }
 
 // Middleware
@@ -21,6 +21,7 @@ app.use(session({
   secret: 'your-secret-key',
   resave: false,
   saveUninitialized: false,
+  cookie: { secure: false } // Set to true for HTTPS
 }));
 
 // Authentication middleware
@@ -38,10 +39,10 @@ const requireAdminOrManager = (req, res, next) => {
   next();
 };
 
-// Configure multer for file uploads
+// Configure multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'public', 'uploads'));
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}-${file.originalname}`;
@@ -59,7 +60,7 @@ const upload = multer({
     }
     cb(new Error('Only images (jpeg, jpg, png, gif) are allowed'));
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 // Routes
@@ -78,6 +79,7 @@ app.post('/login', (req, res) => {
 
   if (user) {
     req.session.user = user;
+    res.cookie('username', user.username);
     res.redirect('/index');
   } else {
     res.status(401).send('Invalid credentials');
@@ -86,6 +88,7 @@ app.post('/login', (req, res) => {
 
 app.get('/logout', (req, res) => {
   req.session.destroy();
+  res.clearCookie('username');
   res.redirect('/login');
 });
 
@@ -97,12 +100,21 @@ app.get('/admin', requireLogin, requireAdminOrManager, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Serve tasks.json
+app.get('/archive', requireLogin, requireAdminOrManager, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'archive.html'));
+});
+
+app.get('/staff', requireLogin, requireAdminOrManager, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'staff.html'));
+});
+
 app.get('/tasks.json', requireLogin, (req, res) => {
   if (fs.existsSync('tasks.json')) {
     const tasks = JSON.parse(fs.readFileSync('tasks.json'));
     if (!['admin', 'manager'].includes(req.session.user.role)) {
-      res.json(tasks.filter(task => task.assignedTo === req.session.user.id));
+      res.json(tasks.filter(task => task.assignedTo === req.session.user.id && !task.archived));
+    } else if (req.path === '/archive') {
+      res.json(tasks.filter(task => task.archived));
     } else {
       res.json(tasks);
     }
@@ -111,8 +123,7 @@ app.get('/tasks.json', requireLogin, (req, res) => {
   }
 });
 
-// Serve users.json for dropdown
-app.get('/users.json', requireLogin, requireAdminOrManager, (req, res) => {
+app.get('/users.json', requireLogin, (req, res) => {
   if (fs.existsSync('users.json')) {
     res.json(JSON.parse(fs.readFileSync('users.json')));
   } else {
@@ -120,7 +131,6 @@ app.get('/users.json', requireLogin, requireAdminOrManager, (req, res) => {
   }
 });
 
-// Task creation
 app.post('/tasks', requireLogin, requireAdminOrManager, upload.single('image'), (req, res) => {
   try {
     const { title, dueDate, season, status, type, assignedTo } = req.body;
@@ -153,7 +163,6 @@ app.post('/tasks', requireLogin, requireAdminOrManager, upload.single('image'), 
   }
 });
 
-// Mark task as completed
 app.post('/tasks/:id/complete', requireLogin, (req, res) => {
   const tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
   const task = tasks.find(t => t.id === parseInt(req.params.id));
@@ -165,7 +174,6 @@ app.post('/tasks/:id/complete', requireLogin, (req, res) => {
   res.redirect('/index');
 });
 
-// Delete task
 app.post('/tasks/:id/delete', requireLogin, requireAdminOrManager, (req, res) => {
   let tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
   tasks = tasks.filter(t => t.id !== parseInt(req.params.id));
@@ -173,7 +181,6 @@ app.post('/tasks/:id/delete', requireLogin, requireAdminOrManager, (req, res) =>
   res.redirect('/admin');
 });
 
-// Archive task
 app.post('/tasks/:id/archive', requireLogin, requireAdminOrManager, (req, res) => {
   const tasks = fs.existsSync('tasks.json') ? JSON.parse(fs.readFileSync('tasks.json')) : [];
   const task = tasks.find(t => t.id === parseInt(req.params.id));
@@ -183,6 +190,48 @@ app.post('/tasks/:id/archive', requireLogin, requireAdminOrManager, (req, res) =
     fs.writeFileSync('tasks.json', JSON.stringify(tasks, null, 2));
   }
   res.redirect('/admin');
+});
+
+app.post('/staff', requireLogin, requireAdminOrManager, (req, res) => {
+  try {
+    const { username, password, name, role } = req.body;
+    if (!username || !password || !name || !role) {
+      throw new Error('All fields are required');
+    }
+
+    const users = fs.existsSync('users.json') ? JSON.parse(fs.readFileSync('users.json')) : [];
+    if (users.find(u => u.username === username)) {
+      throw new Error('Username already exists');
+    }
+
+    users.push({
+      id: users.length + 1,
+      username,
+      password, // TODO: Hash passwords in production
+      name,
+      role,
+    });
+    fs.writeFileSync('users.json', JSON.stringify(users, null, 2));
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/staff/:id', requireLogin, requireAdminOrManager, (req, res) => {
+  try {
+    let users = fs.existsSync('users.json') ? JSON.parse(fs.readFileSync('users.json')) : [];
+    const userId = parseInt(req.params.id);
+    if (users.find(u => u.id === userId && u.username === req.session.user.username)) {
+      throw new Error('Cannot delete your own account');
+    }
+    users = users.filter(u => u.id !== userId);
+    fs.writeFileSync('users.json', JSON.stringify(users, null, 2));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Start server
